@@ -2,6 +2,16 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 import random
 import time
+import pygame
+import os
+
+pygame.init()
+script_dir = os.path.dirname(os.path.realpath(__file__))
+swap_sound_path = os.path.join(script_dir, 'swap.wav')
+compare_sound_path = os.path.join(script_dir, 'compare.wav')
+
+swap_sound = pygame.mixer.Sound(swap_sound_path)
+compare_sound = pygame.mixer.Sound(compare_sound_path)
 
 # Initialize the Tkinter window
 root = tk.Tk()
@@ -48,6 +58,16 @@ def update_speed_label(event=None):
     speed_value_label["text"] = str(speed_var.get())
 speed_slider.bind("<Motion>", update_speed_label)
 
+mute_var = False
+
+def toggle_mute():
+    global mute_var
+    mute_var = not mute_var
+
+mute_button = ttk.Button(control_frame, text="Mute/Unmute", command=toggle_mute)
+mute_button.grid(row=4, column=3, sticky=(tk.W, tk.E))
+
+
 def start_sorting():
     arr = generate_array()
     algo = algorithm_var.get()
@@ -81,8 +101,10 @@ stop_button.grid(row=4, column=1, sticky=(tk.W, tk.E))
 # [?] button for algorithm explanations
 def show_algorithm_info():
     algo = algorithm_var.get()
-    info = f"Information about {algo} will be shown here."
-    tk.messagebox.showinfo("Algorithm Info", info)
+    info_dict = algorithm_info.get(algo, {})
+    info = f"Description: {info_dict.get('Description', 'N/A')}\nTime Complexity: {info_dict.get('Time Complexity', 'N/A')}\nPseudo-code:\n{info_dict.get('Pseudo-code', 'N/A')}"
+    tk.messagebox.showinfo(f"{algo} Info", info)
+
 
 info_button = ttk.Button(control_frame, text="?", command=show_algorithm_info)
 info_button.grid(row=0, column=2)
@@ -120,6 +142,8 @@ def bubble_sort_iteration(arr, i, n):
     swapped = False
     for j in range(0, n-i-1):
         if arr[j] > arr[j+1]:
+            if not mute_var:
+                swap_sound.play()
             arr[j], arr[j+1] = arr[j+1], arr[j]
             swapped = True
 
@@ -134,17 +158,22 @@ def bubble_sort(arr):
     bubble_sort_iteration(arr, 0, len(arr))
 
 # Selection Sort with visualization
+# Selection Sort with visualization
 def selection_sort(arr):
     n = len(arr)
     for i in range(n):
         min_idx = i
         for j in range(i+1, n):
-            if arr[j] < arr[min_idx]:
+            if arr[min_idx] > arr[j]:
                 min_idx = j
-        arr[i], arr[min_idx] = arr[min_idx], arr[i]
+        if min_idx != i:
+            if not mute_var:
+                swap_sound.play()
+            arr[i], arr[min_idx] = arr[min_idx], arr[i]
         draw_array(arr)
         root.update_idletasks()
         time.sleep(0.1)
+
 
 
 # Insertion Sort with visualization
@@ -152,14 +181,16 @@ def insertion_sort(arr):
     n = len(arr)
     for i in range(1, n):
         key = arr[i]
-        j = i-1
-        while j >= 0 and key < arr[j]:
-            arr[j + 1] = arr[j]
-            j -= 1
-        arr[j + 1] = key
-        draw_array(arr)
-        root.update_idletasks()
-        time.sleep(0.1)
+    j = i - 1
+    while j >= 0 and key < arr[j]:
+        if not mute_var:
+            swap_sound.play()
+        arr[j + 1] = arr[j]
+        j -= 1
+    arr[j + 1] = key
+    draw_array(arr)
+    root.update_idletasks()
+    time.sleep(0.1)
 
 
 def merge_sort(arr, l, r):
@@ -211,12 +242,16 @@ def partition(arr, low, high):
     while not done:
         while left <= right and arr[left] <= pivot:
             left = left + 1
-        while arr[right] >= pivot and right >=left:
-            right = right -1
+        while arr[right] >= pivot and right >= left:
+            right = right - 1
         if right < left:
-            done= True
+            done = True
         else:
+            if not mute_var:
+                swap_sound.play()
             arr[left], arr[right] = arr[right], arr[left]
+    if not mute_var:
+        swap_sound.play()
     arr[low], arr[right] = arr[right], arr[low]
     return right
 
@@ -229,6 +264,8 @@ def heapify(arr, n, i):
     if r < n and arr[largest] < arr[r]:
         largest = r
     if largest != i:
+        if not mute_var:
+            swap_sound.play()
         arr[i], arr[largest] = arr[largest], arr[i]
         heapify(arr, n, largest)
 
@@ -237,6 +274,8 @@ def heap_sort(arr):
     for i in range(n // 2 - 1, -1, -1):
         heapify(arr, n, i)
     for i in range(n-1, 0, -1):
+        if not mute_var:
+            swap_sound.play()
         arr[i], arr[0] = arr[0], arr[i]
         heapify(arr, i, 0)
         draw_array(arr)
@@ -259,7 +298,12 @@ def counting_sort_for_radix(arr, exp1):
         count[index % 10] -= 1
         i -= 1
     for i in range(0, len(arr)):
+        if not mute_var:
+            swap_sound.play()
         arr[i] = output[i]
+        draw_array(arr)
+        root.update_idletasks()
+        time.sleep(0.1)
 
 def radix_sort(arr):
     max1 = max(arr)
@@ -271,6 +315,7 @@ def radix_sort(arr):
         time.sleep(0.1)
         exp *= 10
 
+
 def shell_sort(arr):
     n = len(arr)
     gap = n // 2
@@ -279,6 +324,8 @@ def shell_sort(arr):
             temp = arr[i]
             j = i
             while j >= gap and arr[j - gap] > temp:
+                if not mute_var:
+                    swap_sound.play()
                 arr[j] = arr[j - gap]
                 j -= gap
             arr[j] = temp
@@ -286,6 +333,7 @@ def shell_sort(arr):
             root.update_idletasks()
             time.sleep(0.1)
         gap //= 2
+
 
 def cocktail_sort(arr):
     n = len(arr)
@@ -296,6 +344,8 @@ def cocktail_sort(arr):
         swapped = False
         for i in range(start, end):
             if arr[i] > arr[i + 1]:
+                if not mute_var:
+                    swap_sound.play()
                 arr[i], arr[i + 1] = arr[i + 1], arr[i]
                 swapped = True
         if not swapped:
@@ -304,6 +354,8 @@ def cocktail_sort(arr):
         end -= 1
         for i in range(end - 1, start - 1, -1):
             if arr[i] > arr[i + 1]:
+                if not mute_var:
+                    swap_sound.play()
                 arr[i], arr[i + 1] = arr[i + 1], arr[i]
                 swapped = True
         start += 1
@@ -323,10 +375,138 @@ def counting_sort(arr):
         output[count[num] - 1] = num
         count[num] -= 1
     for i in range(len(arr)):
+        if not mute_var:
+            swap_sound.play()
         arr[i] = output[i]
         draw_array(arr)
         root.update_idletasks()
         time.sleep(0.1)
+
+algorithm_info = {
+    "Bubble Sort": {
+        "Description": "Bubble Sort is a simple sorting algorithm that repeatedly steps through the list, compares adjacent elements and swaps them if they are in the wrong order.",
+        "Time Complexity": "O(n^2)",
+        "Pseudo-code": """for i from 0 to n-1:
+    for j from 0 to n-i-1:
+        if arr[j] > arr[j+1]:
+            swap arr[j] and arr[j+1]"""
+    },
+    "Selection Sort": {
+        "Description": "Selection Sort sorts an array by repeatedly finding the minimum element from the unsorted part of the array and putting it at the beginning.",
+        "Time Complexity": "O(n^2)",
+        "Pseudo-code": """for i from 0 to n-1:
+    min_index = i
+    for j from i+1 to n:
+        if arr[j] < arr[min_index]:
+            min_index = j
+    swap arr[i] and arr[min_index]"""
+    },
+    "Insertion Sort": {
+        "Description": "Insertion Sort builds a sorted array one element at a time by repeatedly removing elements from the input data and inserting them into the correct position.",
+        "Time Complexity": "O(n^2)",
+        "Pseudo-code": """for i from 1 to n:
+    key = arr[i]
+    j = i - 1
+    while j >= 0 and arr[j] > key:
+        arr[j+1] = arr[j]
+        j = j - 1
+    arr[j+1] = key"""
+    },
+    "Merge Sort": {
+        "Description": "Merge Sort is a divide-and-conquer algorithm that divides the unsorted list into n sub-lists, sorts them, and then merges them to produce new sorted lists.",
+        "Time Complexity": "O(n log n)",
+        "Pseudo-code": """merge_sort(arr, l, r):
+    if l < r:
+        m = (l + r) // 2
+        merge_sort(arr, l, m)
+        merge_sort(arr, m+1, r)
+        merge(arr, l, m, r)"""
+    },
+    "Quick Sort": {
+        "Description": "Quick Sort is a divide-and-conquer algorithm that works by selecting a 'pivot' element and partitioning the array around the pivot.",
+        "Time Complexity": "O(n log n)",
+        "Pseudo-code": """quick_sort(arr, low, high):
+    if low < high:
+        p = partition(arr, low, high)
+        quick_sort(arr, low, p)
+        quick_sort(arr, p+1, high)"""
+    },
+    "Heap Sort": {
+        "Description": "Heap Sort is a comparison-based sorting algorithm that uses a binary heap data structure.",
+        "Time Complexity": "O(n log n)",
+        "Pseudo-code": """heapify(arr, n, i)
+    largest = i
+    left = 2 * i + 1
+    right = 2 * i + 2
+    if left < n and arr[left] > arr[largest]:
+        largest = left
+    if right < n and arr[right] > arr[largest]:
+        largest = right
+    if largest != i:
+        swap arr[i] and arr[largest]
+        heapify(arr, n, largest)
+heap_sort(arr):
+    for i from n // 2 - 1 to 0:
+        heapify(arr, n, i)
+    for i from n-1 to 0:
+        swap arr[0] and arr[i]
+        heapify(arr, i, 0)"""
+    },
+    "Radix Sort": {
+        "Description": "Radix Sort is a non-comparative sorting algorithm that sorts integers digit by digit from least significant digit to most significant digit.",
+        "Time Complexity": "O(nk)",
+        "Pseudo-code": """for each digit d:
+    counting_sort(arr, d)"""
+    },
+    "Shell Sort": {
+        "Description": "Shell Sort is a generalization of insertion sort that allows the exchange of items that are far apart.",
+        "Time Complexity": "O(n log n)",
+        "Pseudo-code": """gap = n // 2
+while gap > 0:
+    for i from gap to n:
+        temp = arr[i]
+        j = i
+        while j >= gap and arr[j-gap] > temp:
+            arr[j] = arr[j-gap]
+            j = j - gap
+        arr[j] = temp
+    gap = gap // 2"""
+    },
+    "Cocktail Sort": {
+        "Description": "Cocktail Sort is a variation of Bubble Sort that sorts the array from both ends, alternating between forward and backward passes.",
+        "Time Complexity": "O(n^2)",
+        "Pseudo-code": """swapped = True
+start = 0
+end = n-1
+while swapped:
+    swapped = False
+    for i from start to end:
+        if arr[i] > arr[i+1]:
+            swap arr[i] and arr[i+1]
+            swapped = True
+    if not swapped:
+        break
+    swapped = False
+    end = end - 1
+    for i from end to start:
+        if arr[i] > arr[i+1]:
+            swap arr[i] and arr[i+1]
+            swapped = True
+    start = start + 1"""
+    },
+    "Counting Sort": {
+        "Description": "Counting Sort is an integer sorting algorithm that sorts items based on the frequency of each distinct element.",
+        "Time Complexity": "O(n + k)",
+        "Pseudo-code": """count = [0] * (max_val + 1)
+for num in arr:
+    count[num] += 1
+for i from 1 to max_val:
+    count[i] += count[i-1]
+for num in reversed(arr):
+    output[count[num]-1] = num
+    count[num] -= 1"""
+    }
+}
 
 
 # Generate and draw an initial array when the program starts
