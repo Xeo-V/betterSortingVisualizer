@@ -15,7 +15,7 @@ control_frame.grid(row=0, column=0, sticky=(tk.W, tk.E))
 algorithm_label = ttk.Label(control_frame, text="Algorithm:")
 algorithm_label.grid(row=0, column=0, sticky=tk.W)
 algorithm_var = tk.StringVar()
-algorithm_options = ["Bubble Sort", "Selection Sort", "Insertion Sort"]
+algorithm_options = ["Bubble Sort", "Selection Sort", "Insertion Sort", "Merge Sort", "Quick Sort", "Heap Sort", "Radix Sort", "Shell Sort", "Cocktail Sort", "Counting Sort"]
 algorithm_dropdown = ttk.Combobox(control_frame, textvariable=algorithm_var, values=algorithm_options, state="readonly")
 algorithm_dropdown.grid(row=0, column=1, sticky=(tk.W, tk.E))
 algorithm_dropdown.current(0)
@@ -48,7 +48,6 @@ def update_speed_label(event=None):
     speed_value_label["text"] = str(speed_var.get())
 speed_slider.bind("<Motion>", update_speed_label)
 
-# Start and Stop buttons
 def start_sorting():
     arr = generate_array()
     algo = algorithm_var.get()
@@ -58,6 +57,20 @@ def start_sorting():
         selection_sort(arr)
     elif algo == "Insertion Sort":
         insertion_sort(arr)
+    elif algo == "Merge Sort":
+        merge_sort(arr, 0, len(arr) - 1)
+    elif algo == "Quick Sort":
+        quick_sort(arr, 0, len(arr) - 1)
+    elif algo == "Heap Sort":
+        heap_sort(arr)
+    elif algo == "Radix Sort":
+        radix_sort(arr)
+    elif algo == "Shell Sort":
+        shell_sort(arr)
+    elif algo == "Cocktail Sort":
+        cocktail_sort(arr)
+    elif algo == "Counting Sort":
+        counting_sort(arr)
 
 start_button = ttk.Button(control_frame, text="Start", command=start_sorting)
 start_button.grid(row=4, column=0, sticky=(tk.W, tk.E))
@@ -130,7 +143,9 @@ def selection_sort(arr):
                 min_idx = j
         arr[i], arr[min_idx] = arr[min_idx], arr[i]
         draw_array(arr)
-        root.after(100)
+        root.update_idletasks()
+        time.sleep(0.1)
+
 
 # Insertion Sort with visualization
 def insertion_sort(arr):
@@ -143,7 +158,176 @@ def insertion_sort(arr):
             j -= 1
         arr[j + 1] = key
         draw_array(arr)
-        root.after(100)
+        root.update_idletasks()
+        time.sleep(0.1)
+
+
+def merge_sort(arr, l, r):
+    if l < r:
+        m = (l + r) // 2
+        merge_sort(arr, l, m)
+        merge_sort(arr, m+1, r)
+        merge(arr, l, m, r)
+        draw_array(arr)
+        root.update_idletasks()
+        time.sleep(0.1)
+
+def merge(arr, l, m, r):
+    L = arr[l:m+1]
+    R = arr[m+1:r+1]
+    i = j = 0
+    k = l
+    while i < len(L) and j < len(R):
+        if L[i] < R[j]:
+            arr[k] = L[i]
+            i += 1
+        else:
+            arr[k] = R[j]
+            j += 1
+        k += 1
+    while i < len(L):
+        arr[k] = L[i]
+        i += 1
+        k += 1
+    while j < len(R):
+        arr[k] = R[j]
+        j += 1
+        k += 1
+
+def quick_sort(arr, low, high):
+    if low < high:
+        pi = partition(arr, low, high)
+        draw_array(arr)
+        root.update_idletasks()
+        time.sleep(0.1)
+        quick_sort(arr, low, pi)
+        quick_sort(arr, pi + 1, high)
+
+def partition(arr, low, high):
+    pivot = arr[low]
+    left = low + 1
+    right = high
+    done = False
+    while not done:
+        while left <= right and arr[left] <= pivot:
+            left = left + 1
+        while arr[right] >= pivot and right >=left:
+            right = right -1
+        if right < left:
+            done= True
+        else:
+            arr[left], arr[right] = arr[right], arr[left]
+    arr[low], arr[right] = arr[right], arr[low]
+    return right
+
+def heapify(arr, n, i):
+    largest = i
+    l = 2 * i + 1
+    r = 2 * i + 2
+    if l < n and arr[i] < arr[l]:
+        largest = l
+    if r < n and arr[largest] < arr[r]:
+        largest = r
+    if largest != i:
+        arr[i], arr[largest] = arr[largest], arr[i]
+        heapify(arr, n, largest)
+
+def heap_sort(arr):
+    n = len(arr)
+    for i in range(n // 2 - 1, -1, -1):
+        heapify(arr, n, i)
+    for i in range(n-1, 0, -1):
+        arr[i], arr[0] = arr[0], arr[i]
+        heapify(arr, i, 0)
+        draw_array(arr)
+        root.update_idletasks()
+        time.sleep(0.1)
+
+def counting_sort_for_radix(arr, exp1):
+    n = len(arr)
+    output = [0] * n
+    count = [0] * 10
+    for i in range(0, n):
+        index = (arr[i] // exp1)
+        count[index % 10] += 1
+    for i in range(1, 10):
+        count[i] += count[i - 1]
+    i = n - 1
+    while i >= 0:
+        index = (arr[i] // exp1)
+        output[count[index % 10] - 1] = arr[i]
+        count[index % 10] -= 1
+        i -= 1
+    for i in range(0, len(arr)):
+        arr[i] = output[i]
+
+def radix_sort(arr):
+    max1 = max(arr)
+    exp = 1
+    while max1 // exp > 0:
+        counting_sort_for_radix(arr, exp)
+        draw_array(arr)
+        root.update_idletasks()
+        time.sleep(0.1)
+        exp *= 10
+
+def shell_sort(arr):
+    n = len(arr)
+    gap = n // 2
+    while gap > 0:
+        for i in range(gap, n):
+            temp = arr[i]
+            j = i
+            while j >= gap and arr[j - gap] > temp:
+                arr[j] = arr[j - gap]
+                j -= gap
+            arr[j] = temp
+            draw_array(arr)
+            root.update_idletasks()
+            time.sleep(0.1)
+        gap //= 2
+
+def cocktail_sort(arr):
+    n = len(arr)
+    swapped = True
+    start = 0
+    end = n - 1
+    while swapped:
+        swapped = False
+        for i in range(start, end):
+            if arr[i] > arr[i + 1]:
+                arr[i], arr[i + 1] = arr[i + 1], arr[i]
+                swapped = True
+        if not swapped:
+            break
+        swapped = False
+        end -= 1
+        for i in range(end - 1, start - 1, -1):
+            if arr[i] > arr[i + 1]:
+                arr[i], arr[i + 1] = arr[i + 1], arr[i]
+                swapped = True
+        start += 1
+        draw_array(arr)
+        root.update_idletasks()
+        time.sleep(0.1)
+
+def counting_sort(arr):
+    max_val = max(arr)
+    count = [0] * (max_val + 1)
+    output = [0] * len(arr)
+    for num in arr:
+        count[num] += 1
+    for i in range(1, len(count)):
+        count[i] += count[i - 1]
+    for num in reversed(arr):
+        output[count[num] - 1] = num
+        count[num] -= 1
+    for i in range(len(arr)):
+        arr[i] = output[i]
+        draw_array(arr)
+        root.update_idletasks()
+        time.sleep(0.1)
+
 
 # Generate and draw an initial array when the program starts
 initial_array = generate_array()
