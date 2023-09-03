@@ -15,7 +15,7 @@ control_frame.grid(row=0, column=0, sticky=(tk.W, tk.E))
 algorithm_label = ttk.Label(control_frame, text="Algorithm:")
 algorithm_label.grid(row=0, column=0, sticky=tk.W)
 algorithm_var = tk.StringVar()
-algorithm_options = ["Bubble Sort", "Selection Sort", "Insertion Sort", "Merge Sort", "Quick Sort", "Heap Sort", "Radix Sort", "Shell Sort", "Cocktail Sort", "Tim Sort"]
+algorithm_options = ["Bubble Sort", "Selection Sort", "Insertion Sort"]
 algorithm_dropdown = ttk.Combobox(control_frame, textvariable=algorithm_var, values=algorithm_options, state="readonly")
 algorithm_dropdown.grid(row=0, column=1, sticky=(tk.W, tk.E))
 algorithm_dropdown.current(0)
@@ -54,6 +54,10 @@ def start_sorting():
     algo = algorithm_var.get()
     if algo == "Bubble Sort":
         bubble_sort(arr)
+    elif algo == "Selection Sort":
+        selection_sort(arr)
+    elif algo == "Insertion Sort":
+        insertion_sort(arr)
 
 start_button = ttk.Button(control_frame, text="Start", command=start_sorting)
 start_button.grid(row=4, column=0, sticky=(tk.W, tk.E))
@@ -71,7 +75,7 @@ info_button = ttk.Button(control_frame, text="?", command=show_algorithm_info)
 info_button.grid(row=0, column=2)
 
 # Canvas for sorting visualization
-canvas = tk.Canvas(root, bg="white", height=400, width=600)
+canvas = tk.Canvas(root, bg="black", height=600, width=800)
 canvas.grid(row=1, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
 
 # Generate an array of random integers
@@ -81,15 +85,13 @@ def generate_array():
 
 # Draw the array as bars on the canvas
 def draw_array(arr):
-    canvas.delete("all")  # Clear the existing canvas
-    canvas_height = 400
-    canvas_width = 600
+    canvas.delete("all")
+    canvas_height = 600
+    canvas_width = 800
     bar_width = canvas_width // len(arr)
     
     for i, val in enumerate(arr):
-        # Calculate the height of the bar
-        bar_height = val * 3  # Scaling factor
-        # Draw the bar
+        bar_height = val * 6
         canvas.create_rectangle(i * bar_width, canvas_height, (i + 1) * bar_width, canvas_height - bar_height, fill="blue")
 
 # Function to regenerate and redraw the array when the slider changes
@@ -101,19 +103,47 @@ def update_array(event=None):
 array_size_slider.bind("<Motion>", update_array)
 
 # Bubble Sort with visualization
+def bubble_sort_iteration(arr, i, n):
+    swapped = False
+    for j in range(0, n-i-1):
+        if arr[j] > arr[j+1]:
+            arr[j], arr[j+1] = arr[j+1], arr[j]
+            swapped = True
+
+    draw_array(arr)
+
+    if not swapped:
+        return
+
+    root.after(100, bubble_sort_iteration, arr, i+1, n)
+
 def bubble_sort(arr):
+    bubble_sort_iteration(arr, 0, len(arr))
+
+# Selection Sort with visualization
+def selection_sort(arr):
     n = len(arr)
     for i in range(n):
-        for j in range(0, n-i-1):
-            if arr[j] > arr[j+1]:
-                # Swap
-                arr[j], arr[j+1] = arr[j+1], arr[j]
-                
-                # Draw the updated array on the canvas
-                draw_array(arr)
-                
-                # Delay for visualization effect
-                time.sleep(0.1)
+        min_idx = i
+        for j in range(i+1, n):
+            if arr[j] < arr[min_idx]:
+                min_idx = j
+        arr[i], arr[min_idx] = arr[min_idx], arr[i]
+        draw_array(arr)
+        root.after(100)
+
+# Insertion Sort with visualization
+def insertion_sort(arr):
+    n = len(arr)
+    for i in range(1, n):
+        key = arr[i]
+        j = i-1
+        while j >= 0 and key < arr[j]:
+            arr[j + 1] = arr[j]
+            j -= 1
+        arr[j + 1] = key
+        draw_array(arr)
+        root.after(100)
 
 # Generate and draw an initial array when the program starts
 initial_array = generate_array()
