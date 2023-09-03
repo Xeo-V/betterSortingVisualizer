@@ -1,0 +1,11 @@
+
+## How to Contribute
+
+1. Fork the repository.
+2. Clone your forked repository to your machine.
+3. Create a new branch.
+4. Make your changes.
+5. Push your changes back to your forked repository on GitHub.
+6. Create a pull request from your forked repository to the original repository.
+
+Your contributions are much appreciated! 🙏
