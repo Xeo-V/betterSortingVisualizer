@@ -13,6 +13,11 @@ compare_sound_path = os.path.join(script_dir, 'compare.wav')
 swap_sound = pygame.mixer.Sound(swap_sound_path)
 compare_sound = pygame.mixer.Sound(compare_sound_path)
 
+# Global variables for performance metrics
+num_comparisons = 0
+num_swaps = 0
+
+
 # Initialize the Tkinter window
 root = tk.Tk()
 root.title("Sorting Algorithm Visualizer")
@@ -109,6 +114,12 @@ def show_algorithm_info():
 info_button = ttk.Button(control_frame, text="?", command=show_algorithm_info)
 info_button.grid(row=0, column=2)
 
+# Performance Metrics Labels
+comparison_label = tk.Label(control_frame, text=f"Comparisons: {num_comparisons}")
+comparison_label.grid(row=5, column=0)
+swap_label = tk.Label(control_frame, text=f"Swaps: {num_swaps}")
+swap_label.grid(row=5, column=1)
+
 # Canvas for sorting visualization
 canvas = tk.Canvas(root, bg="black", height=600, width=800)
 canvas.grid(row=1, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
@@ -118,16 +129,16 @@ def generate_array():
     array_size = array_size_var.get()
     return [random.randint(1, 100) for _ in range(array_size)]
 
-# Draw the array as bars on the canvas
-def draw_array(arr):
-    canvas.delete("all")
+# Modified draw_array function
+def draw_array(arr, color_indices=[]):
+    canvas.delete("all")  # Clear the existing canvas
     canvas_height = 600
     canvas_width = 800
     bar_width = canvas_width // len(arr)
-    
     for i, val in enumerate(arr):
-        bar_height = val * 6
-        canvas.create_rectangle(i * bar_width, canvas_height, (i + 1) * bar_width, canvas_height - bar_height, fill="blue")
+        color = "blue" if i not in color_indices else "red"
+        bar_height = val * 6  # Scaling factor
+        canvas.create_rectangle(i * bar_width, canvas_height, (i + 1) * bar_width, canvas_height - bar_height, fill=color)
 
 # Function to regenerate and redraw the array when the slider changes
 def update_array(event=None):
@@ -139,13 +150,21 @@ array_size_slider.bind("<Motion>", update_array)
 
 # Bubble Sort with visualization
 def bubble_sort_iteration(arr, i, n):
+    global num_comparisons
+    global num_swaps
     swapped = False
     for j in range(0, n-i-1):
+        num_comparisons += 1  # Increment comparison counter
         if arr[j] > arr[j+1]:
+            num_swaps += 1  # Increment swap counter
             if not mute_var:
                 swap_sound.play()
             arr[j], arr[j+1] = arr[j+1], arr[j]
             swapped = True
+
+    # Update Tkinter labels
+    comparison_label.config(text=f"Comparisons: {num_comparisons}")
+    swap_label.config(text=f"Swaps: {num_swaps}")
 
     draw_array(arr)
 
@@ -155,45 +174,74 @@ def bubble_sort_iteration(arr, i, n):
     root.after(100, bubble_sort_iteration, arr, i+1, n)
 
 def bubble_sort(arr):
+    global num_comparisons
+    global num_swaps
+    num_comparisons = 0  # Reset counter
+    num_swaps = 0  # Reset counter
     bubble_sort_iteration(arr, 0, len(arr))
 
-# Selection Sort with visualization
-# Selection Sort with visualization
 def selection_sort(arr):
+    global num_comparisons
+    global num_swaps
+    num_comparisons = 0  # Reset counter
+    num_swaps = 0  # Reset counter
     n = len(arr)
     for i in range(n):
         min_idx = i
         for j in range(i+1, n):
+            num_comparisons += 1  # Increment comparison counter
             if arr[min_idx] > arr[j]:
                 min_idx = j
         if min_idx != i:
+            num_swaps += 1  # Increment swap counter
             if not mute_var:
                 swap_sound.play()
             arr[i], arr[min_idx] = arr[min_idx], arr[i]
+
+        # Update Tkinter labels
+        comparison_label.config(text=f"Comparisons: {num_comparisons}")
+        swap_label.config(text=f"Swaps: {num_swaps}")
+
         draw_array(arr)
         root.update_idletasks()
         time.sleep(0.1)
 
 
 
-# Insertion Sort with visualization
 def insertion_sort(arr):
+    global num_comparisons
+    global num_swaps
+    num_comparisons = 0  # Reset counter
+    num_swaps = 0  # Reset counter
     n = len(arr)
     for i in range(1, n):
         key = arr[i]
-    j = i - 1
-    while j >= 0 and key < arr[j]:
-        if not mute_var:
-            swap_sound.play()
-        arr[j + 1] = arr[j]
-        j -= 1
-    arr[j + 1] = key
-    draw_array(arr)
-    root.update_idletasks()
-    time.sleep(0.1)
+        j = i - 1
+        while j >= 0:
+            num_comparisons += 1  # Increment comparison counter
+            if key < arr[j]:
+                num_swaps += 1  # Increment swap counter
+                if not mute_var:
+                    swap_sound.play()
+                arr[j + 1] = arr[j]
+                j -= 1
+            else:
+                break
+        arr[j + 1] = key
+
+        # Update Tkinter labels
+        comparison_label.config(text=f"Comparisons: {num_comparisons}")
+        swap_label.config(text=f"Swaps: {num_swaps}")
+
+        draw_array(arr)
+        root.update_idletasks()
+        time.sleep(0.1)
 
 
+
+# Merge Sort with visualization and performance metrics
 def merge_sort(arr, l, r):
+    global num_comparisons
     if l < r:
         m = (l + r) // 2
         merge_sort(arr, l, m)
@@ -204,11 +252,14 @@ def merge_sort(arr, l, r):
         time.sleep(0.1)
 
 def merge(arr, l, m, r):
+    global num_comparisons
+    global num_swaps
     L = arr[l:m+1]
     R = arr[m+1:r+1]
     i = j = 0
     k = l
     while i < len(L) and j < len(R):
+        num_comparisons += 1  # Increment comparison counter
         if L[i] < R[j]:
             arr[k] = L[i]
             i += 1
@@ -216,6 +267,7 @@ def merge(arr, l, m, r):
             arr[k] = R[j]
             j += 1
         k += 1
+        num_swaps += 1  # Increment swap counter
     while i < len(L):
         arr[k] = L[i]
         i += 1
@@ -225,7 +277,10 @@ def merge(arr, l, m, r):
         j += 1
         k += 1
 
+# Quick Sort with visualization and performance metrics
 def quick_sort(arr, low, high):
+    global num_comparisons
+    global num_swaps
     if low < high:
         pi = partition(arr, low, high)
         draw_array(arr)
@@ -235,11 +290,14 @@ def quick_sort(arr, low, high):
         quick_sort(arr, pi + 1, high)
 
 def partition(arr, low, high):
+    global num_comparisons
+    global num_swaps
     pivot = arr[low]
     left = low + 1
     right = high
     done = False
     while not done:
+        num_comparisons += 1  # Increment comparison counter
         while left <= right and arr[left] <= pivot:
             left = left + 1
         while arr[right] >= pivot and right >= left:
@@ -250,30 +308,41 @@ def partition(arr, low, high):
             if not mute_var:
                 swap_sound.play()
             arr[left], arr[right] = arr[right], arr[left]
+            num_swaps += 1  # Increment swap counter
     if not mute_var:
         swap_sound.play()
     arr[low], arr[right] = arr[right], arr[low]
+    num_swaps += 1  # Increment swap counter
     return right
 
+# Heap Sort with visualization and performance metrics
 def heapify(arr, n, i):
+    global num_comparisons
+    global num_swaps
     largest = i
     l = 2 * i + 1
     r = 2 * i + 2
+    num_comparisons += 1
     if l < n and arr[i] < arr[l]:
         largest = l
+    num_comparisons += 1
     if r < n and arr[largest] < arr[r]:
         largest = r
     if largest != i:
+        num_swaps += 1
         if not mute_var:
             swap_sound.play()
         arr[i], arr[largest] = arr[largest], arr[i]
         heapify(arr, n, largest)
 
 def heap_sort(arr):
+    global num_comparisons
+    global num_swaps
     n = len(arr)
     for i in range(n // 2 - 1, -1, -1):
         heapify(arr, n, i)
     for i in range(n-1, 0, -1):
+        num_swaps += 1
         if not mute_var:
             swap_sound.play()
         arr[i], arr[0] = arr[0], arr[i]
@@ -282,7 +351,9 @@ def heap_sort(arr):
         root.update_idletasks()
         time.sleep(0.1)
 
+# Radix Sort with visualization and performance metrics
 def counting_sort_for_radix(arr, exp1):
+    global num_swaps
     n = len(arr)
     output = [0] * n
     count = [0] * 10
@@ -298,6 +369,7 @@ def counting_sort_for_radix(arr, exp1):
         count[index % 10] -= 1
         i -= 1
     for i in range(0, len(arr)):
+        num_swaps += 1
         if not mute_var:
             swap_sound.play()
         arr[i] = output[i]
@@ -306,6 +378,8 @@ def counting_sort_for_radix(arr, exp1):
         time.sleep(0.1)
 
 def radix_sort(arr):
+    global num_comparisons
+    global num_swaps
     max1 = max(arr)
     exp = 1
     while max1 // exp > 0:
@@ -315,8 +389,10 @@ def radix_sort(arr):
         time.sleep(0.1)
         exp *= 10
 
-
+# Shell Sort with visualization and performance metrics
 def shell_sort(arr):
+    global num_comparisons
+    global num_swaps
     n = len(arr)
     gap = n // 2
     while gap > 0:
@@ -324,6 +400,8 @@ def shell_sort(arr):
             temp = arr[i]
             j = i
             while j >= gap and arr[j - gap] > temp:
+                num_comparisons += 1
+                num_swaps += 1
                 if not mute_var:
                     swap_sound.play()
                 arr[j] = arr[j - gap]
@@ -334,8 +412,10 @@ def shell_sort(arr):
             time.sleep(0.1)
         gap //= 2
 
-
+# Cocktail Sort with visualization and performance metrics
 def cocktail_sort(arr):
+    global num_comparisons
+    global num_swaps
     n = len(arr)
     swapped = True
     start = 0
@@ -343,7 +423,9 @@ def cocktail_sort(arr):
     while swapped:
         swapped = False
         for i in range(start, end):
+            num_comparisons += 1
             if arr[i] > arr[i + 1]:
+                num_swaps += 1
                 if not mute_var:
                     swap_sound.play()
                 arr[i], arr[i + 1] = arr[i + 1], arr[i]
@@ -353,7 +435,9 @@ def cocktail_sort(arr):
         swapped = False
         end -= 1
         for i in range(end - 1, start - 1, -1):
+            num_comparisons += 1
             if arr[i] > arr[i + 1]:
+                num_swaps += 1
                 if not mute_var:
                     swap_sound.play()
                 arr[i], arr[i + 1] = arr[i + 1], arr[i]
@@ -363,7 +447,9 @@ def cocktail_sort(arr):
         root.update_idletasks()
         time.sleep(0.1)
 
+# Counting Sort with visualization and performance metrics
 def counting_sort(arr):
+    global num_swaps
     max_val = max(arr)
     count = [0] * (max_val + 1)
     output = [0] * len(arr)
@@ -375,13 +461,14 @@ def counting_sort(arr):
         output[count[num] - 1] = num
         count[num] -= 1
     for i in range(len(arr)):
+        num_swaps += 1
         if not mute_var:
             swap_sound.play()
         arr[i] = output[i]
         draw_array(arr)
         root.update_idletasks()
         time.sleep(0.1)
-
+        
 algorithm_info = {
     "Bubble Sort": {
         "Description": "Bubble Sort is a simple sorting algorithm that repeatedly steps through the list, compares adjacent elements and swaps them if they are in the wrong order.",
