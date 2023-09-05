@@ -40,6 +40,6 @@ This Sorting Algorithm Visualizer is an interactive and visually stunning tool d
 
 Read the `CONTRIBUTIONS.txt` for information related to making contributions.
 
----
+----
 
 ## ⚠️ **Important**: Read the `DISCLAIMER.txt` before downloading ⚠️
