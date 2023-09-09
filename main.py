@@ -206,7 +206,7 @@ def selection_sort(arr):
         root.update_idletasks()
         time.sleep(0.1)
 
-
+ 
 
 def insertion_sort(arr):
     global num_comparisons
